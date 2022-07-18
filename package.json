@@ -1,0 +1,27 @@
+{
+  "name": "puhelinluettelo",
+  "version": "1.0.0",
+  "description": "exercises of part 3",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Paukku/fullstackopencoursepart3.git"
+  },
+  "author": "Paula Häyrynen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Paukku/fullstackopencoursepart3/issues"
+  },
+  "homepage": "https://github.com/Paukku/fullstackopencoursepart3#readme",
+  "dependencies": {
+    "express": "^4.18.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.19"
+  }
+}
