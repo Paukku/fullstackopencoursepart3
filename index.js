@@ -1,6 +1,10 @@
 const { response } = require('express')
 const express = require('express')
+const morgan = require('morgan')
 const app = express()
+
+
+
 
 let persons = [
     {
@@ -25,7 +29,16 @@ let persons = [
     },
 ]
 
+
+
 app.use(express.json())
+
+morgan.token('body', req => {
+  return JSON.stringify(req.body)
+})
+
+app.use(morgan(':method :url :body'))
+
 
 const generateID = () => {
     const maxId = Math.floor(Math.random() * 2000)
@@ -83,7 +96,6 @@ app.get('/', (req, res) => {
     persons = persons.concat(person)
     res.json(persons)
   })
-
 
   const PORT = 3001
   app.listen(PORT, () => {
