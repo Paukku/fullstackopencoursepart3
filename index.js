@@ -1,39 +1,16 @@
-const { response } = require('express')
+const path = require('path')
+require('dotenv').config({path: path.resolve(__dirname, '.gitgnore/.env')})
+
 const express = require('express')
 const morgan = require('morgan')
 const app = express()
 const cors = require('cors')
 
 app.use(cors())
-app.use(express.json())
 app.use(express.static('build'))
-
-
-let persons = [
-    {
-        id: 1,
-        name: "Arto Hellas",
-        number: "040-123456"
-    },
-    {
-        id: 2,
-        name: "Ada Lovelace",
-        number: "39-44-5434534"
-    },
-    {
-        id: 3,
-        name: "Dan Abramov",
-        number: "12-43-234345"
-    },
-    {
-        id: 4,
-        name: "Mary Poppendick",
-        number: "39-23-6523122"
-    },
-]
-
-
-
+app.use(express.json())
+const Number = require('./models/number')
+const { response } = require('express')
 morgan.token('body', req => {
   return JSON.stringify(req.body)
 })
@@ -41,36 +18,47 @@ morgan.token('body', req => {
 app.use(morgan(':method :url :body'))
 
 
-const generateID = () => {
-    const maxId = Math.floor(Math.random() * 2000)
-    return maxId
-  }
-
+const requestLogger = (request, response, next) => {
+  console.log('Method:', request.method)
+  console.log('Path:  ', request.path)
+  console.log('Body:  ', request.body)
+  console.log('---')
+  next()
+}
+app.use(requestLogger)
 app.get('/', (req, res) => {
     res.send('<h1>Hello World!</h1>')
   })
   
   app.get('/api/persons', (req, res) => {
-    res.json(persons)
+    Number.find({}).then(number => {
+      res.json(number)
+    })
   })
 
-  app.get('/api/persons/:id', (reg, res) => {
-    const id = Number(reg.params.id)
-    const person = persons.find(person => person.id === id)
-    if(person){
-        res.json(person)
-    }
-    else {
+  app.get('/api/persons/:id', (reg, res, next) => {
+    Number.findById(reg.params.id)
+    .then(number => {
+      if(number) {
+        res.json(number)
+      } else {
         res.status(404).end()
-    }
+      }
+    })
+    .catch(error => {
+      console.log(error)
+      response.status(400).send({error: 'malformatted id'})
+    })
   })
 
-  app.delete('/api/persons/:id', (reg, res) => {
-    const id = Number(reg.params.id)
-    console.log(id)
-    persons = persons.filter(person => person.id !== id)
+  app.delete('/api/persons/:id', (reg, res, next) => {
+    console.log(reg.params.id)
+    Number.findByIdAndRemove(reg.params.id)
+    .then(result => {
+      res.status(204).end()
+    })
+    .catch(error => next(error))
     
-    res.status(204).end()
   })
 
   app.get('/info', (reg, res) => { 
@@ -79,26 +67,46 @@ app.get('/', (req, res) => {
   
   app.post('/api/persons', (reg, res) => {
     const body = reg.body
-    const sameName = persons.filter(person => person.name === body.name).length
+    // const sameName = persons.filter(person => person.name === body.name).length
 
-    if(!body.name || !body.number) {
+    if(body.name === undefined || body.number === undefined) {
         return res.status(400).json({error: 'Name or number missing'})
     }
 
-    if(sameName > 0) {
-        return res.status(400).json({error: 'Name must be unique'})
-    }
+   // if(sameName > 0) {
+    //    return res.status(400).json({error: 'Name must be unique'})
+    // }
 
-    const person = {
-        id: generateID(),
+    const person = new Number({
         name: body.name,
         number: body.number,
-    }
-    persons = persons.concat(person)
-    res.json(persons)
+    })
+
+    person.save().then(savePerson => {
+      res.json(savePerson)
+    })
   })
 
-  const PORT = process.env.PORT || 3001
+  const unknownEndpoint = (request, response) => {
+    response.status(404).send({ error: 'unknown endpoint' })
+  }
+
+  app.use(unknownEndpoint)
+  
+  const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
+
+    if (error.name === 'CastError') {
+      return response.status(400).send({ error: 'malformatted id' })
+    }
+
+    next(error)
+  }
+  
+  // virheellisten pyyntöjen käsittely
+  app.use(errorHandler)
+
+  const PORT = process.env.PORT 
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
   })
