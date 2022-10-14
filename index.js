@@ -11,6 +11,7 @@ app.use(express.static('build'))
 app.use(express.json())
 const Number = require('./models/number')
 const { response } = require('express')
+const { NOTFOUND } = require('dns')
 morgan.token('body', req => {
   return JSON.stringify(req.body)
 })
@@ -62,7 +63,7 @@ app.get('/', (req, res) => {
   })
 
   app.get('/info', (reg, res) => { 
-    res.send(`<p>Phonebook has info for ${persons.length} people.</p>` + new Date())
+    res.send(`<p>Phonebook has info for ${Number.length} people.</p>` + new Date())
   })
   
   app.post('/api/persons', (reg, res) => {
@@ -86,6 +87,21 @@ app.get('/', (req, res) => {
       res.json(savePerson)
     })
   })
+
+  app.put('/api/persons/:id', (reg, res, next) => {
+    const body = reg.body
+
+    const number = {
+      name: body.name,
+      number: body.number,
+    }
+    Number.findByIdAndUpdate(reg.params.id, number, {new: true})
+    .then(updateNumber => {
+      res.json(updateNumber)
+    })
+    .catch(error => next(error))
+  }) 
+
 
   const unknownEndpoint = (request, response) => {
     response.status(404).send({ error: 'unknown endpoint' })
