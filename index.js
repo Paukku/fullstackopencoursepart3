@@ -66,36 +66,36 @@ app.get('/', (req, res) => {
     res.send(`<p>Phonebook has info for ${Number.length} people.</p>` + new Date())
   })
   
-  app.post('/api/persons', (reg, res) => {
-    const body = reg.body
-    // const sameName = persons.filter(person => person.name === body.name).length
+  app.post('/api/persons', (req, res, next) => {
+    const body = req.body
 
     if(body.name === undefined || body.number === undefined) {
         return res.status(400).json({error: 'Name or number missing'})
     }
-
-   // if(sameName > 0) {
-    //    return res.status(400).json({error: 'Name must be unique'})
-    // }
 
     const person = new Number({
         name: body.name,
         number: body.number,
     })
 
-    person.save().then(savePerson => {
+    person.save()
+    .then(savePerson => {
       res.json(savePerson)
     })
+    .catch(error => next(error))
   })
 
   app.put('/api/persons/:id', (reg, res, next) => {
-    const body = reg.body
+    const {name} = reg.body
 
     const number = {
       name: body.name,
       number: body.number,
     }
-    Number.findByIdAndUpdate(reg.params.id, number, {new: true})
+    Number.findByIdAndUpdate(reg.params.id,
+       {name}, number, 
+       {new: true, runValidators: true, name: 'query'}
+       )
     .then(updateNumber => {
       res.json(updateNumber)
     })
@@ -114,6 +114,9 @@ app.get('/', (req, res) => {
 
     if (error.name === 'CastError') {
       return response.status(400).send({ error: 'malformatted id' })
+    }
+    else if (error.name === 'ValidationError') {
+      return response.status(400).json({ error: error.message })
     }
 
     next(error)
