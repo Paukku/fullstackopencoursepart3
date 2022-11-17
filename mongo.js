@@ -1,9 +1,9 @@
 const mongoose = require('mongoose')
 
 if (process.argv.length<3) {
-    console.log('give password as argument')
-    process.exit(1)
-  }
+  console.log('give password as argument')
+  process.exit(1)
+}
 
 
 const password = process.argv[2]
@@ -23,22 +23,23 @@ const numberSchema = new mongoose.Schema({
 const Number = mongoose.model('Number', numberSchema)
 
 if (process.argv3 === undefined) {
-    console.log('phonebook:')
-    Number.find({}).then(result => {
-        result.forEach(num => {
-            console.log(`${num.name} ${num.number}`)
-        })
-        mongoose.connection.close()
+  console.log('phonebook:')
+  Number.find({}).then(result => {
+    result.forEach(num => {
+      console.log(`${num.name} ${num.number}`)
     })
+    mongoose.connection.close()
+  })
 }
 else{
-    console.log(process.argv3)
-    const num = new Number({
+  console.log(process.argv3)
+  const num = new Number({
     name: giveName,
     number: giveNumber,
-    })
+  })
 
-    num.save().then(result => {
+  num.save().then(() => {
     console.log(`added ${num.name} number ${num.number} to phonebook`)
     mongoose.connection.close()
-})}
+  })
+}
